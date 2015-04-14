@@ -4,7 +4,7 @@ $risdl = new RIS_Downloader;
 
 #if ( $risdl->run_tests() == true ) 
 {
-   $risdl->find_new_files( 5 );
+   $risdl->find_new_files( 203000 );
 }
 
 
@@ -98,6 +98,7 @@ class RIS_Downloader
         if( $dl === false ) $this->add_log( 'can not download id '.$id );
         else
         {
+            echo "\n".'try to download id: '.$id;
             $size = trim( substr( $http_response_header[8], 15) );
             $OrgNname = trim( substr( $http_response_header[10], 42, -1) );
             $suffix = substr( $OrgNname, strrpos($OrgNname, '.')+1 );
