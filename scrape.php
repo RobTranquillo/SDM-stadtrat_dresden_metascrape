@@ -38,13 +38,14 @@ class RIS_Downloader
     public function find_new_files( $next )
     {
         $lastId = $this->discover( 'highestId' );
+        echo "\nFind $lastId as higest id";
         for( $id=$lastId+1; $id <= $lastId+$next; $id++ )
         {
             $this->download( $id, $this->downloadDir );
         }
 
         if( $this->newFilesCount > 0 ) $this->add_log('Search for $next new files. Find and download '.$this->newFilesCount.' new files.', true );
-        else $this->add_log( 'Search for $next new files. Could not find new files.', true );
+        else $this->add_log( 'Search for '.$next.' new files. Could not find new files.', true );
     }
 
     
@@ -52,9 +53,16 @@ class RIS_Downloader
     // returns the higest last id found. If no previous, return zero for starting new 
     private function discover( $flag )
     {
-        $files = scandir( $this->downloadDir, SCANDIR_SORT_DESCENDING );
-        $nameparts = explode( '_', $files[2] ); //first entry after "." and ".."
-        if( $nameparts[1] > 0) return $nameparts[1];
+        $higestId = 0;
+        $dh = opendir( $this->downloadDir );
+        readdir($dh); readdir($dh); //jump over '.' and '..'
+        while( false !== ($entry = readdir($dh)))
+        {
+            $nameparts = preg_split("/[_.]/", $entry); //explodes string at underline and point 
+            $id = (int) $nameparts[1];
+            if($id > $higestId) $higestId = $id;
+        }
+        if( $higestId > 0) return $higestId;
         else return 0;
     }
 
@@ -116,7 +124,7 @@ class RIS_Downloader
     ////////////////////////////////
     private function add_log( $msg, $echo=false )
     {
-        $msg = date("d_m_Y-h:i:s").': '.$msg.PHP_EOL;
+        $msg = date("d.m.Y-h:i:s").': '.$msg.PHP_EOL;
         file_put_contents('scrape.log', $msg, FILE_APPEND);
         if($echo) echo "\n\r".$msg; //log also to console
     }
