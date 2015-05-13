@@ -13,10 +13,6 @@ $risdl = new RIS_Downloader;
 print "\n";
 
 
-
-
-
-
 /*
  * Scraper Class
  *
@@ -107,9 +103,9 @@ class RIS_Downloader
             file_put_contents($destination.$filename.".$suffix", $dl);
 
             $infofile =
-                'name: '.$OrgNname .PHP_EOL.
-                'size: '.$size .PHP_EOL.
-                'download date:'.date('d-m-Y-H:i:s',$now)." ($now)";
+                'name = '.$OrgNname .PHP_EOL.
+                'size = '.$size .PHP_EOL.
+                'download_date = '.date('d-m-Y-H:i:s',$now)." ($now)";
             file_put_contents($destination.$filename.'.'.$this->infoFileSuffix, $infofile);
             $this->newFilesCount++;
          }
