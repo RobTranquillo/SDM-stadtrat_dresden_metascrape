@@ -2,15 +2,16 @@
 
 $risdl = new RIS_Downloader;
 
-#if ( $risdl->run_tests() == true ) 
-{
-   $risdl->find_new_files( 203000 );
-}
+# $risdl->run_tests(); //build in Tests
+
+$risdl->find_new_files( 203000 );
 
 
 // file end
 // avoid ugly console output (|%|)
 print "\n";
+
+
 
 
 /*

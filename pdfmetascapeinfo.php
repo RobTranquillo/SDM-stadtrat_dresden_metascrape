@@ -55,12 +55,23 @@ function get_metadata($htmlfile)
 {
 	if( file_exists($htmlfile) )
 	{
-		///// get the title from html file
+		// open file
 		$handle = @fopen($htmlfile, "r");
 		$buffer = fread($handle, 4096);
-		// get title
+
+		///// get the title
 		$title = get_html_tag('title', $buffer);
 		if(strlen($title)>0) $infos['meta_title'] = $title;
+		
+		///// get the upload-time
+		$datetime = get_meta_tag_content('date', $buffer); //<meta name="date" content="2013-07-31T23:14:47+00:00"/>
+		echo "\n -> $datetime";
+		if(strlen($datetime)>0) {
+			$dd = explode("-", substr($datetime,0,10));  //-> date_date
+			$dt = explode(":", substr($datetime,10,8));  //-> date-time
+			$uxts = mktime((int)$dt[0], (int)$dt[1], (int)$dt[2], (int)$dd[1], (int)$dd[2], (int)$dd[0]);
+			$infos['upload_date'] = $datetime." ($uxts)";
+		}
 	}
 	return $infos;
 }
