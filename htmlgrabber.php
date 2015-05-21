@@ -24,10 +24,8 @@ function get_meta_tag_content($metatag_name, $str, $limit = -1)
 	$contentend   = strpos( $str, '"', $contentstart );
 	$contentlen   = $contentend - $contentstart; 
 	
-	$content = substr( $str, $contentstart, $contentlen );
-	$tag = str_replace(array("\r", "\n"), " ", $content);
-	
-	if( $contentstart > 0 && $contentend > $contentstart ) return $tag; //return content if not empty
+	$content = substr( $str, $contentstart, $contentlen );	
+	if( $contentstart > 0 && $contentend > $contentstart ) return $content; //return content if not empty
 	else return false;
 }
 
@@ -39,6 +37,7 @@ function get_meta_tag_content($metatag_name, $str, $limit = -1)
 // return: the content tag: "foobar"
 // on false returns false
 // [opt] limit = read only to this length 
+// I'm guessing you are looking at the beginning of a UTF-8 sequence, quite possibly U+00A0 whose UTF-8 encoding is 194 160 (0xC2 0xA0).
 function get_html_tag($tag, $str, $limit = -1)
 {
 	$tag_open = '<'.$tag.'>';
@@ -50,8 +49,8 @@ function get_html_tag($tag, $str, $limit = -1)
 	if($limit > 0 && $tagstart > $limit) return; //break if limit is reached
 	
 	$tag = substr( $str, $tagstart, $taglen );
-	$tag = str_replace(array("\r", "\n"), " ", $tag);
-	
+	$tag = str_replace('&#160;', ' ', $tag);
+	$tag = preg_replace('/[\s\t\n\r\s]+/', ' ', $tag);
 	if( $tagstart > 0 && $tagend > $tagstart ) return $tag; //return tag if not empty
 	else return false;
 }

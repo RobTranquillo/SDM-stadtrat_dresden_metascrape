@@ -1,15 +1,39 @@
 <?php
+/*
+ * Scraper für das Ratsinfo System von Dresden (allris,sessionet)
+ * 
+ * Versucht ausgehend von der höchsten Id im downloads-ordner 
+ * weitere Dokumente zu finden. 
+ * 
+ * Parameter:
+ * optional --try=2000 
+ * 	sucht in den nächsten 2000 ids nach Dokumenten (2000 = Standardwert)
+ * 
+ */
 
+
+// handle script parameter
+$param = getopt('', array('trynext::'));
+if($param['trynext'] > 0 ) {
+	echo 'The next '.$param['trynext'].' IDs will be scaned.';
+	$trynext = $param['trynext'];
+}
+else {
+	$trynext = 2000; //if no value for --try is given, 2000 file will be tryed out
+	echo 'No limit is set, the next '.$trynext.' IDs will be scaned.';
+}
+
+
+
+// start scrape-object
 $risdl = new RIS_Downloader;
+# $risdl->run_tests(); //start the build-in tests
+$risdl->find_new_files( $trynext );
 
-# $risdl->run_tests(); //build in Tests
-
-$risdl->find_new_files( 203000 );
-
-
-// file end
-// avoid ugly console output (|%|)
+// handle ugly console output (|%|) on file end
 print "\n";
+
+//script end
 
 
 
@@ -30,31 +54,36 @@ class RIS_Downloader
     }
 
 
-    /////////////////////////////
-    // search new files by a given count  
+    ///////////////////////////////////////
+    // search new files by scan for new ids  
     public function find_new_files( $next )
     {
-        $lastId = $this->discover( 'highestId' );
-        echo "\nFind $lastId as higest id";
-        for( $id=$lastId+1; $id <= $lastId+$next; $id++ )
+		if( ! $next > 0) return false;
+		
+        $startId = $this->discover( 'highestId' );
+        echo "\nFind $startId as higest id";
+        for( $id=$startId; $startId+$next > $id; $id++ )
         {
             $this->download( $id, $this->downloadDir );
         }
 
-        if( $this->newFilesCount > 0 ) $this->add_log('Search for $next new files. Find and download '.$this->newFilesCount.' new files.', true );
-        else $this->add_log( 'Search for '.$next.' new files. Could not find new files.', true );
+		echo "\nResults:";
+        if( $this->newFilesCount > 0 ) $this->add_log('Searched for '.$next.' new files, and find and download '.$this->newFilesCount.' new files.', true );
+        else $this->add_log( 'Searched for '.$next.' new files. Could not find new files.', true );
     }
 
     
     /////////////////////////////
     // returns the higest last id found. If no previous, return zero for starting new 
+    // $flag for different action later 
     private function discover( $flag )
     {
         $higestId = 0;
         $dh = opendir( $this->downloadDir );
-        readdir($dh); readdir($dh); //jump over '.' and '..'
         while( false !== ($entry = readdir($dh)))
         {
+			if( substr_count($entry, '.pdf') < 1 ) continue;
+            
             $nameparts = preg_split("/[_.]/", $entry); //explodes string at underline and point 
             $id = (int) $nameparts[1];
             if($id > $higestId) $higestId = $id;

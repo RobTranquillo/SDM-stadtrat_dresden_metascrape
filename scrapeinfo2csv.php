@@ -10,7 +10,7 @@
 if(isset($argv[1])) $outputfile = $argv[1];
 	else $outputfile = 'allfilesmeta.csv';
 $downloadpath = 'downloads';
-$csvhead = '"nr","fileid","orginal_filename","size","download date","meta_title"'; //must be the same sort order as they are in .scrapeinfo
+$csvhead = '"nr","fileid","orginal_filename","size","download date","meta_title","upload_date","subject"'; //must be the same sort order as they are in .scrapeinfo
 
 // write all scrapeinfo in just one file and sort same tags in same colums
 echo 'Start searching for .scrapeinfo files in '.$downloadpath;
