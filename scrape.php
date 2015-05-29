@@ -79,6 +79,8 @@ class RIS_Downloader
     private function discover( $flag )
     {
         $higestId = 0;
+        if( file_exists($this->downloadDir) === false) mkdir( $this->downloadDir );
+        
         $dh = opendir( $this->downloadDir );
         while( false !== ($entry = readdir($dh)))
         {
