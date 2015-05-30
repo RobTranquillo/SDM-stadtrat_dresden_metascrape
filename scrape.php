@@ -12,73 +12,172 @@
  */
 
 
-// handle script parameter
-$param = getopt('', array('trynext::'));
-if($param['trynext'] > 0 ) {
-	echo 'The next '.$param['trynext'].' IDs will be scaned.';
-	$trynext = $param['trynext'];
-}
-else {
-	$trynext = 2000; //if no value for --try is given, 2000 file will be tryed out
-	echo 'No limit is set, the next '.$trynext.' IDs will be scaned.';
-}
-
-
-
-// start scrape-object
+$userparam = getopt('', array('trynext::', 'diff::'));  //get script parameter
 $risdl = new RIS_Downloader;
 # $risdl->run_tests(); //start the build-in tests
-$risdl->find_new_files( $trynext );
-
-// handle ugly console output (|%|) on file end
-print "\n";
-
-//script end
 
 
+if( isset($userparam['diff']) )	{
+		$risdl->diff_all();
+	}
+else
+	{
+		if( isset($userparam['trynext']) ) {
+			echo 'The next '.$userparam['trynext'].' IDs will be scaned.';
+			$trynext = $userparam['trynext'];
+		}
+		else 
+		{
+			$trynext = 2000; //if no value for --try is given, 2000 file will be tryed out
+			echo 'No limit is set, the next '.$trynext.' IDs will be scaned.';
+		}
+	$risdl->search_new_files( $trynext );
+	}
 
 
 /*
- * Scraper Class
+ * Ratsinfomations-Scraper Class
  *
  */
 class RIS_Downloader
 {
-    private $downloadDir = 'downloads/';
-    private $infoFileSuffix = 'scrapeinfo';
+	
+    private $downloadDir = 'downloads/'; //primary download folder
+    private $versionsDir = 'versions/'; //contains older versions of a file
+    private $infoFileSuffix = 'scrapeinfo'; //contains all data about a downloaded file
     private $newFilesCount = 0;
+    private $unequal_files = array();
+
+        
     
-    //////////////////////
-    function __construct()
+    /*
+     * check differences between former downloaded files and 
+     * the files are now online at the RIS
+     * 
+     * different files will bei downloaded and former files 
+     * will be versioned 
+     * 
+     */ 
+    public function diff_all( )
     {
-    }
+		$this->add_log("**** start new diff process ****");
+        $this->discover( 'allIds' );        			
+		$this->find_unequal_files();
+		$this->version_unequal_files();
+		$this->download_unequal_files();
+	}
 
 
-    ///////////////////////////////////////
-    // search new files by scan for new ids  
-    public function find_new_files( $next )
+
+    /*
+	 *  
+     */
+    private function version_unequal_files()
+    {
+		if( count( $this->unequal_files) > 0 )
+		{
+			if( file_exists($this->versionsDir) === false ) mkdir( $this->versionsDir );
+			foreach($this->unequal_files as $id => $name)
+			{
+				$name_scrapeinfo = str_replace('.pdf', '.scrapeinfo', $name);
+				copy( $this->downloadDir.$name, $this->versionsDir.$name );
+				copy( $this->downloadDir.$name_scrapeinfo, $this->versionsDir.$name_scrapeinfo );
+				unlink( $this->downloadDir.$name);
+				unlink( $this->downloadDir.$name_scrapeinfo);
+			}
+		}
+	}
+    
+
+
+    /*
+     * 
+     */
+    private function download_unequal_files()
+    {
+		$bulk = count($this->unequal_files);
+		foreach($this->unequal_files as $id => $path)
+		{
+			$this->download( $id, $this->downloadDir );
+		}
+		echo "\nResults:";
+        if( $this->newFilesCount > 0 ) $this->add_log('Searched for '.$bulk.' new files, and find and download '.$this->newFilesCount.' new files.', true );
+        else $this->add_log( 'Searched for '.$bulk.' new files. Could not find new files.', true );		
+	}        
+
+
+	/*
+	 *  compare former downloaded files with the files are now online 
+	 */
+	private function find_unequal_files()
+	{
+       $count = count($this->allKnownIds);
+        if( $count > 0 )
+			{
+				$xi=0;
+				$starttime = mktime();
+				$unequal = array();
+				ksort( $this->allKnownIds );				
+				
+				foreach($this->allKnownIds as $id => $PDFpath)
+				{
+					$xi++;
+					echo "\ncheck id:$id ($xi/ $count, ". round($starttime / mktime())*($count-$xi) . ' seconds remaining)' ;
+					$http_head = $this->download( $id, false, true ); //gets only the head of the file 
+					$scrapeinfo = str_replace('.pdf', '.scrapeinfo', $PDFpath);
+					$scrapeinfo = parse_ini_file( $this->downloadDir.$scrapeinfo, false, INI_SCANNER_RAW );
+					
+					if( isset($http_head['Content-Length']))
+					{
+						if( isset($scrapeinfo['size']) == false ) 
+							$scrapeinfo['size'] = $http_head['Content-Length']; //fix empty values in scrapeinfo
+						
+						if($scrapeinfo['size'] != $http_head['Content-Length']) 
+							$unequal[$id] = $PDFpath; //save unequal
+					}
+				}
+				echo "\nfound ".count($unequal).' unequal files';
+				$this->add_log("unequal files found: ".implode(',',$unequal), true);
+				$this->unequal_files = $unequal;
+			}
+		else
+			{
+				echo $this->add_log('Exit, because no former files where found.', true );
+			}
+	
+	}
+
+
+
+
+    /*
+     * identify the highes document-id are there and
+     * search for new files by scaning for IDs above 
+     * this highest known id  
+     * 
+     */ 
+    public function search_new_files( $next )
     {
 		if( ! $next > 0) return false;
-		
         $startId = $this->discover( 'highestId' );
         echo "\nFind $startId as higest id";
         for( $id=$startId; $startId+$next > $id; $id++ )
         {
             $this->download( $id, $this->downloadDir );
         }
-
 		echo "\nResults:";
         if( $this->newFilesCount > 0 ) $this->add_log('Searched for '.$next.' new files, and find and download '.$this->newFilesCount.' new files.', true );
         else $this->add_log( 'Searched for '.$next.' new files. Could not find new files.', true );
     }
 
     
+    private function discover( $flag )
     /////////////////////////////
     // returns the higest last id found. If no previous, return zero for starting new 
     // $flag for different action later 
-    private function discover( $flag )
     {
         $higestId = 0;
+        $this->allKnownIds = array();
         if( file_exists($this->downloadDir) === false) mkdir( $this->downloadDir );
         
         $dh = opendir( $this->downloadDir );
@@ -86,10 +185,16 @@ class RIS_Downloader
         {
 			if( substr_count($entry, '.pdf') < 1 ) continue;
             
-            $nameparts = preg_split("/[_.]/", $entry); //explodes string at underline and point 
-            $id = (int) $nameparts[1];
-            if($id > $higestId) $higestId = $id;
+			$nameparts = preg_split("/[_.]/", $entry); //explodes string at underline and point 
+			$id = (int) $nameparts[1];
+			if($id > $higestId) $higestId = $id;
+
+			if( $flag == 'allIds')
+			{
+				$this->allKnownIds[$id] = $entry;
+			}
         }
+        
         if( $higestId > 0) return $higestId;
         else return 0;
     }
@@ -97,7 +202,7 @@ class RIS_Downloader
 
     /////////////////////////////
     // download(id [,head(bool)] )
-    // try to download given file
+    // try to download given file or just the head
     // create file and *.info fileid or return false
     /* $http_response_header:
         // [0] => HTTP/1.1 200 OK
@@ -120,32 +225,42 @@ class RIS_Downloader
     {
         $h = @fopen('http://ratsinfo.dresden.de/getfile.php?id='.$id.'&type=do','rb');
         if( $h === false) return false; //id not found, end of story
-        $dl = stream_get_contents( $h );
-        //über fread() werden immer nur die ersten bytes gehlt, dann abgebrochen, das kann zur analyse genutzt werden
-
-        if( $dl === false ) $this->add_log( 'can not download id '.$id );
-        else
-        {
-            echo "\n".'try to download id: '.$id;
-            $size = trim( substr( $http_response_header[8], 15) );
-            $OrgNname = trim( substr( $http_response_header[10], 42, -1) );
-            $suffix = substr( $OrgNname, strrpos($OrgNname, '.')+1 );
-            $now = mktime();
-            $filename = 'fileid_'.$id.'_'.$now; //should: fileid_00001_1428947960.pdf [bez-id-timestamp.suffix]) 
-            file_put_contents($destination.$filename.".$suffix", $dl);
-
-            $infofile =
-                'name = '.$OrgNname .PHP_EOL.
-                'size = '.$size .PHP_EOL.
-                'download_date = '.date('d-m-Y-H:i:s',$now)." ($now)";
-            file_put_contents($destination.$filename.'.'.$this->infoFileSuffix, $infofile);
-            $this->newFilesCount++;
-         }
-
+        
         if( $head === true ) //just download head
-        {
-            //print_r( $http_response_header );
-        }
+			{
+				fclose($h);
+				foreach($http_response_header as $str)
+				{
+					$field = substr($str, 0, strpos($str,':'));
+					$value = substr($str, strpos($str,':')+1);
+					$http_response_header_new[$field] = $value;
+				}
+				
+				return $http_response_header_new;
+				// über fread() werden immer nur die ersten bytes gehlt, dann abgebrochen, das kann zur analyse genutzt werden
+			}
+        else
+			{
+				$dl = stream_get_contents( $h );
+				if( $dl === false ) $this->add_log( 'can not download id '.$id );
+				else
+				{
+					echo "\n".'try to download id: '.$id;
+					$size = trim( substr( $http_response_header[8], 15) );
+					$OrgNname = trim( substr( $http_response_header[10], 42, -1) );
+					$suffix = substr( $OrgNname, strrpos($OrgNname, '.')+1 );
+					$now = mktime();
+					$filename = 'fileid_'.$id.'_'.$now; //should: fileid_00001_1428947960.pdf [bez-id-timestamp.suffix]) 
+					file_put_contents($destination.$filename.".$suffix", $dl);
+
+					$infofile =
+						'name = '.$OrgNname .PHP_EOL.
+						'size = '.$size .PHP_EOL.
+						'download_date = '.date('d-m-Y-H:i:s',$now)." ($now)";
+					file_put_contents($destination.$filename.'.'.$this->infoFileSuffix, $infofile);
+					$this->newFilesCount++;
+				 }
+			}
         fclose($h);
     }
 
@@ -193,4 +308,6 @@ class RIS_Downloader
     }
     
 }
+
+print "\n"; // new line and avoid ugly console output (|%|) after execution
 ?>
