@@ -12,10 +12,10 @@ Auf http://www.boogiedev.net/staDDratmeta wird dieses Programm regelmässig ausg
 
 
 # Startscripte
-start_update.sh
+**start_update.sh**xx
 	Startet den Download aller DoKumente aus dem Ratsinformationssystem. Sind Dateien bereits schon vorhanden 		sucht es nur nach neueren Dateien
 
-start_diff.sh
+''start_diff.sh''yyy
 	Überprüft, ob sich die Dokumente auf dem Server ggü den heruntergeladenen verändert haben und legt 			verschiedene Versionen ab.
 
 
