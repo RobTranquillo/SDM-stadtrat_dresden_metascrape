@@ -1,12 +1,22 @@
-# SDM-stadtrat_dresden_metascrape
-download all documents from Stradrat Dresden and extract structured and semantic data from these pdfs not just plain text
+# SDM - Stadtrat Dresden Metascrape
 
-This is the scraper to get the files and the converter that uses pdftohtml on console (for Linux and Windows available).
+Damit können alle Dokumente eines Stadrats, der auch auf auf AllRIS/Sessionnet basiert, herunter geladen werden.
 
-This is just the beginning to analyze the converted html and get some more structured, semantic metadata out of the government data, that was caged into PDF before.
+Aus den Downloadinformationen und dem Versuch die PDFs auszulesen werden weitere Informationen neben den Dokumenten abgelegt. 
 
-Look at http://www.boogiedev.net/staDDratmeta to get the newest compressed output of this process chain.
+Um PDF Dokumente auszulesen wird das Programm pdftohtml (für Linux and Windows erhältlich) benötigt.
 
+Dieses PRojekt soll nur der Anfang sein um alle Dukumente und Informationen aus dem Stadtrat als OpenData vorliegen zu haben. Später wird versucht mit dem Projekt weiter und tiefer in die Erkennung der Inhalte der PDFs hineinzugehen.
+
+Auf http://www.boogiedev.net/staDDratmeta wird dieses Programm regelmässig ausgeführt und dessen Resultat zusammengefasst als *.zip zum Download angeboten. Dieses enthält nicht die Dokumente, sondern nur dessen extrahierten MetaINformationen und eine leicht weiter zu verwendende CSV Datei mit allen Daten.  Um die orginalen PDFs (~24k stk, 17Gb) selber zu haben, muss SDM heruntergeladen und ausgeführt werden.
+
+
+# Startscripte
+start_update.sh
+	Startet den Download aller DoKumente aus dem Ratsinformationssystem. Sind Dateien bereits schon vorhanden 		sucht es nur nach neueren Dateien
+
+start_diff.sh
+	Überprüft, ob sich die Dokumente auf dem Server ggü den heruntergeladenen verändert haben und legt 			verschiedene Versionen ab.
 
 
 Erklärung der Scripte:
