@@ -1,8 +1,9 @@
 <?php
 /*
- * pdf > pdftohtml and write the meta data in html
- * than look for html tags in there and write these
- * into the .scrapeinfo file
+ * 
+ * Konvertiert PDF in html.
+ * Bekannte html tags landen in der dazugehörigen .scrapeinfo Datei.
+ * 
  *  
  */
 
@@ -39,12 +40,13 @@ foreach( $files AS $document )
 
 
 
-////////////////////////////////////////////
-// filters the array, to keep only new files
-//
-// function for use together with cron.service 
-// for permanent update of the data  
-////////////////////////////////////////////
+/*
+ * filters the array by files timestamp, to keep only new files
+ *
+ * function for use together with cron.service 
+ * for permanent update of the data  
+ * 
+ */
 function filter_files($arr, $threshold)
 {
 	$threshold = (int) $threshold;

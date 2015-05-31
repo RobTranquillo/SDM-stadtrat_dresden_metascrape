@@ -1,24 +1,26 @@
 <?php
 /*
- * Scraper für das Ratsinfo System von Dresden (allris,sessionet)
+ * Downloader für das Ratsinfo System von Dresden (allris,sessionet)
  * 
- * Versucht ausgehend von der höchsten Id im downloads-ordner 
- * weitere Dokumente zu finden. 
+ * $risdl->run_tests(); //start the build-in tests
  * 
- * Parameter:
- * optional --try=2000 
- * 	sucht in den nächsten 2000 ids nach Dokumenten (2000 = Standardwert)
+ * Nutzbare Script-Parameter:
+ * 
+ * --trynext=2000  (optional)
+ * 	 sucht in den nächsten 2000 ids nach neuen Dokumenten (2000 = Standardwert) und lädt sie herunter
+ * 
+ * --diff (optional)
+ *   sucht nach Veränderungen auf dem Server und lädt nur die veränderte Dokumente herunter 
+ *   vorhandene Dokumente werden versioniert
  * 
  */
 
-
-$userparam = getopt('', array('trynext::', 'diff::'));  //get script parameter
 $risdl = new RIS_Downloader;
-# $risdl->run_tests(); //start the build-in tests
 
-
+// handle script parameters
+$userparam = getopt('', array('trynext::', 'diff::'));
 if( isset($userparam['diff']) )	{
-		$risdl->diff_all();
+		$risdl->diff_all( $userparam['diff'] );
 	}
 else
 	{
@@ -31,12 +33,13 @@ else
 			$trynext = 2000; //if no value for --try is given, 2000 file will be tryed out
 			echo 'No limit is set, the next '.$trynext.' IDs will be scaned.';
 		}
+	
 	$risdl->search_new_files( $trynext );
 	}
 
 
 /*
- * Ratsinfomations-Scraper Class
+ * Ratsinfomations downloader class
  *
  */
 class RIS_Downloader
@@ -54,21 +57,21 @@ class RIS_Downloader
      * check differences between former downloaded files and 
      * the files are now online at the RIS
      * 
-     * different files will bei downloaded and former files 
+     * different files will be downloaded and former files 
      * will be versioned 
      * 
      */ 
-    public function diff_all( )
+    public function diff_all( $limit )
     {
 		$this->add_log("**** start new diff process ****");
         $this->discover( 'allIds' );        			
-		$this->find_unequal_files();
+		$this->find_unequal_files( $limit );
 		$this->version_unequal_files();
 		$this->download_unequal_files();
 	}
 
 
-
+	
     /*
 	 *  
      */
@@ -109,7 +112,7 @@ class RIS_Downloader
 	/*
 	 *  compare former downloaded files with the files are now online 
 	 */
-	private function find_unequal_files()
+	private function find_unequal_files($limit = 0)
 	{
        $count = count($this->allKnownIds);
         if( $count > 0 )
@@ -122,6 +125,9 @@ class RIS_Downloader
 				foreach($this->allKnownIds as $id => $PDFpath)
 				{
 					$xi++;
+					
+					if($limit > 0 AND $xi > $limit) break; // limitate the scan for test behaviour 
+					
 					echo "\ncheck id:$id ($xi/ $count, ". round($starttime / mktime())*($count-$xi) . ' seconds remaining)' ;
 					$http_head = $this->download( $id, false, true ); //gets only the head of the file 
 					$scrapeinfo = str_replace('.pdf', '.scrapeinfo', $PDFpath);
