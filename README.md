@@ -19,7 +19,7 @@ start_diff.sh
 	Überprüft, ob sich die Dokumente auf dem Server ggü den heruntergeladenen verändert haben und legt 			verschiedene Versionen ab.
 
 
-Erklärung der Scripte:
+## Dokumenteaion
 <ol>
 	<li><strong> scrape.php </strong>
 Läd alle im Stadtrat verfügbaren Dokumente auf einmal herunter. Im Script sind auch weitere Funktionen, mit denen später auch weitere Dokumente nachgeladen werden können. Dieses Script legt mehr als 24k PDFs und zu jeder Datei noch eine "*.scrapeinfo" Datei auf der Festplatte ab, in der Informationen zum download enthalten sind und die später als container für weitere Metadaten dienen und als Vergleichswerte für spätere Veränderungsanalysen dienen.</li>
