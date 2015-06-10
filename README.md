@@ -8,7 +8,7 @@ Um PDF Dokumente auszulesen wird das Programm pdftohtml (für Linux and Windows 
 
 Dieses PRojekt soll nur der Anfang sein um alle Dukumente und Informationen aus dem Stadtrat als OpenData vorliegen zu haben. Später wird versucht mit dem Projekt weiter und tiefer in die Erkennung der Inhalte der PDFs hineinzugehen.
 
-Auf http://www.boogiedev.net/staDDratmeta wird dieses Programm regelmässig ausgeführt und dessen Resultat zusammengefasst als *.zip zum Download angeboten. Dieses enthält nicht die Dokumente, sondern nur dessen extrahierten MetaINformationen und eine leicht weiter zu verwendende CSV Datei mit allen Daten.  Um die orginalen PDFs (~24k stk, 17Gb) selber zu haben, muss SDM heruntergeladen und ausgeführt werden.
+Auf http://sdm.boogiedev.net wird dieses Programm regelmässig ausgeführt und dessen Resultat zusammengefasst als *.zip zum Download angeboten. Dieses enthält nicht die Dokumente, sondern nur dessen extrahierten MetaINformationen und eine leicht weiter zu verwendende CSV Datei mit allen Daten.  Um die orginalen PDFs (~24k stk, 17Gb) selber zu haben, muss SDM heruntergeladen und ausgeführt werden.
 
 
 # Startscripte
